@@ -55,7 +55,7 @@ namespace AdvantEdgeAPI.Controllers
             }
             catch(Exception ex)
             {
-                _logger.LogError($"Failed writing updated status to transaction Id {id}");
+                _logger.LogError(ex, $"Failed writing updated status to transaction Id {id}");
                 //kick off more error handling ehre
             }
 
@@ -93,7 +93,7 @@ namespace AdvantEdgeAPI.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed writing updated status to transaction Id {id}");
+                _logger.LogError(ex, $"Failed writing updated status to transaction Id {id}");
                 //kick off more error handling ehre
             }
 
