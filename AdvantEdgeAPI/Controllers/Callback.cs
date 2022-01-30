@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using AdvantEdgeAPI.Models.IO;
 using Microsoft.AspNetCore.Http;
+using AdvantEdgeAPI.Models.DB;
+using AdvantEdgeAPI.Models;
 
 namespace AdvantEdgeAPI.Controllers
 {
@@ -14,10 +16,12 @@ namespace AdvantEdgeAPI.Controllers
     public class Callback : ControllerBase
     {
         private readonly ILogger<Callback> _logger;
+        private ApplicationDbContext _dbContext;
 
-        public Callback(ILogger<Callback> logger)
+        public Callback(ILogger<Callback> logger, ApplicationDbContext dbContext)
         {
             _logger = logger;
+            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -27,12 +31,34 @@ namespace AdvantEdgeAPI.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult Post(Guid id)
+        public ActionResult Post(Guid id, [FromBody] string status)
         {
-            ClientRequest input = new ClientRequest()
+            _logger.LogInformation($"Calling POST on callback/{id} endpoint");
+
+            Transaction transaction = _dbContext.Transactions.Where(t => t.Id == id).FirstOrDefault();
+
+            //check to see if we found a record in the database
+            if (transaction == null)
             {
-                Body = ""
-            };
+                _logger.LogError($"Couldn't find transaction Id {id}");
+                //kick off more error handling here, depending if example.com handles it, or if has to raise some internal process
+                //don't continue
+                return null;
+            }
+
+            transaction.Status = status;
+
+            //attempt to update the local database
+            try
+            {
+                _dbContext.SaveChanges();
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Failed writing updated status to transaction Id {id}");
+                //kick off more error handling ehre
+            }
+
             return null;
         }
 
@@ -44,8 +70,33 @@ namespace AdvantEdgeAPI.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult Put(Guid id)
+        public ActionResult Put(Guid id, [FromBody] string status, string detail)
         {
+            _logger.LogInformation($"Calling PUT on callback/{id} endpoint");
+
+            Transaction transaction = _dbContext.Transactions.Where(t => t.Id == id).FirstOrDefault();
+            
+            //check to see if we found a record in the database
+            if (transaction == null)
+            {
+                _logger.LogError($"Couldn't find transaction Id {id}");
+                //kick off more error handling here, depending if example.com handles it, or if has to raise some internal process
+                //don't continue
+                return null;
+            }
+
+            transaction.Status = status;
+            transaction.Detail = detail;
+            try
+            {
+                _dbContext.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed writing updated status to transaction Id {id}");
+                //kick off more error handling ehre
+            }
+
             return null;
         }
     }
