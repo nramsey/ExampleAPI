@@ -70,7 +70,7 @@ namespace AdvantEdgeAPI.Controllers
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult Put(Guid id, [FromBody] string status, string detail)
+        public ActionResult Put(Guid id, [FromBody] ServiceResponse request)
         {
             _logger.LogInformation($"Calling PUT on callback/{id} endpoint");
 
@@ -85,8 +85,8 @@ namespace AdvantEdgeAPI.Controllers
                 return null;
             }
 
-            transaction.Status = status;
-            transaction.Detail = detail;
+            transaction.Status = request.Status;
+            transaction.Detail = request.Detail;
             try
             {
                 _dbContext.SaveChanges();
